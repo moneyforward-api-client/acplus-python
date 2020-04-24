@@ -1,0 +1,550 @@
+openapi: 3.0.2
+info:
+  title: マネーフォワードクラウド会計Plus API
+  description: マネーフォワードクラウド会計PlusのAPI
+  version: 1.0.0
+  termsOfService: https://acplus.momeyforward.com/terms/
+  contact:
+    name: Money Forward Cloud Accounting Plus API support team
+    url: https://acplus.moneyforward.com/support
+    email: api.acplus.support@moneyforward.co.jp
+servers:
+
+- url: https://api-enterprise-accounting.moneyforward.com/api/v1
+  description: Production
+
+paths:
+  /journals/files:
+    post:
+      operationId: CreateJournalFile
+      summary: 仕訳帳作成要求
+      description: 仕訳帳作成をリクエストします。仕訳帳はリクエスト受付後に非同期で作成されます。仕訳帳の作成状況の確認や作成結果の取得は受付成功時に返却される作成要求IDを指定して仕訳帳作成状況取得APIや仕訳帳ダウンロードAPIを呼び出します。開始日と終了日に含まれる会計期は1つである必要があります。
+      tags:
+        - Journals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJournalFileRequest'
+      responses:
+        "202":
+          description: 仕訳作成要求の受付が成功した場合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateJournalFileResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "415":
+          $ref: '#/components/responses/UnSupportedMediaType'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /journals/files/{requestId}:
+    get:
+      tags:
+        - Journals
+      summary: 仕訳帳ダウンロード
+      operationId: DownloadJournalFile
+      description: >
+        仕訳帳をCSV形式でダウンロードできます。
+        パラメータで指定する作成要求IDは仕訳帳作成要求APIで取得したものです。文字コードは仕訳帳作成要求APIでUTF8またはShiftJISから選択できます。デフォルトはUTF8となります。作成後90日以内の仕訳帳のみダウンロード可能です。
+        作成中または削除済の仕訳帳はダウンロードできません。
+      parameters:
+        - name: requestId
+          in: path
+          description: 作成要求ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+      responses:
+        "200":
+          description: 仕訳帳のダウンロードが成功した場合
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        "410":
+          $ref: '#/components/responses/Gone'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    delete:
+      operationId: DeleteJournalFile
+      summary: 仕訳帳削除
+      description: 作成済の仕訳帳を削除します。パラメータで指定する作成要求IDは仕訳帳作成要求APIで取得したものです。作成要求IDで指定する仕訳帳が作成中の場合は失敗します。すでに削除済の仕訳帳に対して削除を実行した場合は成功します。
+      tags:
+        - Journals
+      parameters:
+        - name: requestId
+          in: path
+          description: 作成要求ID
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+      responses:
+        "204":
+          description: 仕訳帳の削除が成功した場合
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /journals/files/{requestId}/status:
+    get:
+      operationId: GetJournalFileStatus
+      summary: 仕訳帳作成状況取得
+      description: 仕訳帳作成状況を取得します。パラメータで指定する作成要求IDは仕訳帳作成要求APIで取得したものです。作成後90日以内の仕訳帳のみ状況を取得可能です。
+      tags:
+        - Journals
+      parameters:
+        - name: requestId
+          description: 作成要求ID
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+      responses:
+        "200":
+          description: 仕訳帳作成状況の取得が成功した場合
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalFileStatus'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        "404":
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /journals/files/status:
+    get:
+      operationId: GetJournalFileStatusList
+      summary: 仕訳帳作成状況一覧取得
+      description: 仕訳帳作成状況の一覧を取得します。作成後90日以内の仕訳帳のみ状況を取得可能です。
+      tags:
+        - Journals
+      parameters:
+        - in: query
+          description: 仕訳帳作成状況一覧の取得開始位置
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          required: false
+        - in: query
+          description: 仕訳帳作成状況一覧の取得件数
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+          required: false
+      responses:
+        "200":
+          description: 仕訳帳作成状況の一覧の取得が成功した場合
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JournalFileStatus'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /accounts:
+    get:
+      operationId: GetAccounts
+      summary: 勘定科目一覧取得
+      description: 勘定科目一覧を取得します。デフォルトではJSON形式となりますが、勘定科目の一覧をCSVで取得する場合はHTTPヘッダ Acceptでtext/csvを指定してください。CSVで取得する場合はHTTPヘッダ Accept-CharsetでUTF-8またはShift_JISを指定可能です。未指定の場合はUTF-8となります。
+      tags:
+        - Accounts
+      parameters:
+        - in: header
+          name: Accept-Charset
+          schema:
+            type: string
+            default: utf-8
+            enum:
+              - utf-8
+              - sjis
+          description: The charset type of text/csv.
+      responses:
+        "200":
+          description: 勘定科目一覧の取得が成功した場合
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /sub-accounts:
+    get:
+      operationId: GetSubAccounts
+      summary: 補助科目一覧取得
+      description: 補助科目一覧を取得します。
+      tags:
+        - SubAccounts
+      parameters:
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          required: false
+          description: The initial index of subAccounts to return.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+          required: false
+          description: The number of subAccounts to return.
+        - in: query
+          name: accountIds
+          schema:
+            type: array
+            items:
+              type: integer
+          type: form
+          explode: false
+          description: The id of account to get subAccount.
+      responses:
+        "200":
+          description: 補助科目一覧の取得が成功した場合
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubAccount'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "403":
+          $ref: '#/components/responses/Forbidden'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+tags:
+  - name: Journals
+    description: 仕訳帳
+  - name: Accounts
+    description: 勘定科目
+  - name: SubAccounts
+    description: 補助科目
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+  schemas:
+    CreateJournalFileRequest:
+      description: 仕訳帳作成要求request
+      type: object
+      properties:
+        fromDate:
+          description: 開始日付
+          type: string
+          format: date
+        toDate:
+          description: 終了日付
+          type: string
+          format: date
+        approvalStatus:
+          description: 承認ステータス
+          type: string
+          enum:
+            - approved
+            - unapproved
+            - both
+          default: approved
+        characterSet:
+          description: 文字コード
+          type: string
+          enum:
+            - utf8
+            - sjis
+          default: utf8
+      required:
+        - fromDate
+        - toDate
+    CreateJournalFileResponse:
+      description: 仕訳帳作成要求response
+      type: object
+      properties:
+        requestId:
+          description: 作成要求ID
+          type: integer
+          format: int64
+          minimum: 0
+      required:
+        - requestId
+    JournalFileStatus:
+      description: 仕訳帳作成状況
+      type: object
+      properties:
+        requestId:
+          description: 作成要求ID
+          type: integer
+          format: int64
+          minimum: 0
+        requestedAt:
+          description: 作成要求日時
+          type: string
+          format: date-time
+        requestParams:
+          $ref: '#/components/schemas/CreateJournalFileRequest'
+        status:
+          description: 作成状況
+          type: string
+          enum:
+            - pending
+            - in_progress
+            - created
+            - failed
+        createdAt:
+          description: 作成日時
+          type: string
+          format: date-time
+      required:
+        - requestId
+        - requestedAt
+        - requestParams
+        - status
+    Account:
+      description: 勘定科目
+      type: object
+      properties:
+        accountFinancialStatementsType:
+          description: 帳票
+          type: string
+        categoryName:
+          description: 分類
+          type: string
+        accountId:
+          description: 勘定科目ID
+          type: integer
+          format: int64
+        accountName:
+          description: 勘定科目名
+          type: string
+        tax:
+          description: 税区分
+          type: string
+        isEnabled:
+          description: 使用
+          type: boolean
+      required:
+        - accountFinancialStatementsType
+        - categoryName
+        - accountId
+        - accountName
+        - tax
+        - isEnabled
+    SubAccount:
+      description: 補助科目
+      type: object
+      properties:
+        accountId:
+          description: 勘定科目ID
+          type: integer
+          format: int64
+        subAccountName:
+          description: 補助科目名
+          type: string
+        tax:
+          description: 税区分
+          type: string
+      required:
+        - accountId
+        - subAccountName
+        - tax
+    Error:
+      description: エラー
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - validation_failed
+            - operation_not_completed
+            - invalid_credential
+            - permission_denied
+            - request_not_found
+            - data_creation_failed
+            - unsupported_media_type
+            - internal_error
+          default: internal_error
+          description: >
+            エラー種別:
+              * `validation_failed`: リクエストボディやパラメータのバリデーションエラー
+              * `operation_not_completed`: 処理待ちや処理中のリクエストに対し、ファイルダウンロードや削除を要求した
+              * `invalid_credential`: 認証・認可情報が不正
+              * `permission_denied`: APIを実行する権限がない
+              * `request_not_found`: 指定された作成要求IDが存在しない
+              * `data_creation_failed`: 作成要求を受けたが、その後の処理でデータやファイル生成に失敗した
+              * `unsupported_media_type`: APIでサポートされていないリクエスト形式。Content-Type が不正な場合など。
+              * `internal_error`: 内部エラー
+        title:
+          description: エラー概要
+          type: string
+        detail:
+          description: エラーの詳細な説明
+          type: string
+        errors:
+          description: エラー詳細のリスト
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorDetail'
+          minItems: 0
+      required:
+        - type
+        - title
+        - detail
+
+    ErrorDetail:
+      description: エラー詳細
+      type: object
+      properties:
+        resource:
+          description: エラーとなったリソース
+          type: string
+        name:
+          description: エラーとなった項目
+          type: string
+        reason:
+          description: エラー理由
+          type: string
+      required:
+        - resource
+        - name
+        - reason
+  responses:
+    BadRequest:
+      description: パラメータ不正などAPI呼び出し側理由のエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: validation_failed
+            title: validation failed
+            errors:
+              -
+                resouce: request
+                name: requestId
+                reason: an invalid interger
+
+    Unauthorized:
+      description: APIキーが未設定または不正または失効済の場合のエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: invalid_credential
+            title: invalid credential
+            detail: invalid api key
+    Forbidden:
+      description: アクセス権限がない場合のエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: permission_denied
+            title: permission denied
+            detail: POST /journal/files not permitted
+    NotFound:
+      description: 指定されたリソースが存在しない場合のエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: request_not_found
+            title: request not found
+            detail: request (id=100) is not found
+    Gone:
+      description: 指定されたリソースにアクセスできなくなった場合のエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: data_creation_failed
+            title: data creation failed
+            detail: create journal file operation failed
+    UnSupportedMediaType:
+      description: 指定されたデータフォーマットに対応していない場合
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: unsupported_media_type
+            title: unsupported media type
+            detail: /applicaion/xml is not supported
+    UnexpectedError:
+      description: 予期していないエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            type: internal_error
+            title: internal error
+            detail: the server encountered an internal server error
+security:
+  - ApiKeyAuth: []
