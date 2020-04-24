@@ -548,3 +548,4 @@ components:
             detail: the server encountered an internal server error
 security:
   - ApiKeyAuth: []
+
