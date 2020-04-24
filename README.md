@@ -37,11 +37,11 @@ Please follow the [installation procedure](#installation--usage) and then run th
 ```python
 from __future__ import print_function
 import time
-import moneyforward_acplus
+import moneyforward_acplus as acplus
 from moneyforward_acplus.rest import ApiException
 from pprint import pprint
 
-configuration = moneyforward_acplus.Configuration()
+configuration = acplus.Configuration()
 # Configure API key authorization: ApiKeyAuth
 configuration.api_key['X-API-KEY'] = 'YOUR_API_KEY'
 # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
@@ -51,9 +51,9 @@ configuration.api_key['X-API-KEY'] = 'YOUR_API_KEY'
 configuration.host = "https://api-enterprise-accounting.moneyforward.com/api/v1"
 
 # Enter a context with an instance of the API client
-with moneyforward_acplus.ApiClient(configuration) as api_client:
+with acplus.ApiClient(configuration) as api_client:
     # Create an instance of the API class
-    api_instance = moneyforward_acplus.AccountsApi(api_client)
+    api_instance = acplus.AccountsApi(api_client)
     accept_charset = 'utf-8' # str | The charset type of text/csv. (optional) (default to 'utf-8')
 
     try:
@@ -103,6 +103,4 @@ Class | Method | HTTP request | Description
 
 ## Author
 
-api.acplus.support@moneyforward.co.jp
-
-
+yasuhiroota26@gmail.com
