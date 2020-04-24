@@ -50,8 +50,6 @@ configuration.api_key['X-API-KEY'] = 'YOUR_API_KEY'
 # Defining host is optional and default to https://api-enterprise-accounting.moneyforward.com/api/v1
 configuration.host = "https://api-enterprise-accounting.moneyforward.com/api/v1"
 
-# Defining host is optional and default to https://api-enterprise-accounting.moneyforward.com/api/v1
-configuration.host = "https://api-enterprise-accounting.moneyforward.com/api/v1"
 # Enter a context with an instance of the API client
 with moneyforward_acplus.ApiClient(configuration) as api_client:
     # Create an instance of the API class
