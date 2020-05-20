@@ -554,7 +554,11 @@ class ApiClient(object):
                                  content_disposition).group(1)
             path = os.path.join(os.path.dirname(path), filename)
 
-        with open(path, "w") as f:
+        mode = "wb"
+        if type(response.data) is str:
+            mode = "w"
+
+        with open(path, mode) as f:
             f.write(response.data)
 
         return path
